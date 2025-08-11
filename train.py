@@ -189,11 +189,13 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--dataset_path', type=str, required=True, help='path to tokenized HF dataset')
+    parser.add_argument('--pad_sequence', action="store_true", help='Whether to pad the sequence to 512')
     parser.add_argument('--num_epochs', type=int, default=1, help='Num epochs')
     parser.add_argument('--batch_size', type=int, default=4, help='batch size, in units of #batch dimensions')
     parser.add_argument('--learning_rate', type=float, default=1e-4, help='max LR value')
     parser.add_argument('--weight_decay', type=float, default=0.0, help='weight decay')
     parser.add_argument('--num_token_permutations', type=int, default=0, help='Number of random token permutations')
+    parser.add_argument('--project_name', type=str, required=True, help='Comet project name')
     args = parser.parse_args()
 
     assert torch.cuda.is_available(), 'CUDA not available'
@@ -222,23 +224,36 @@ if __name__ == '__main__':
     val_max_steps = 20
     save_every = batch_ratio * 1000
 
-    sequence_length = 1024
-
-    def collate_fn(examples, K=0):
-        input_ids = torch.tensor([ex['input_ids'] for ex in examples], dtype=torch.long)
-        if K > 0:
-            batch_size, seq_len = input_ids.size()
-            for i in range(batch_size):
-                # Select K random positions
-                perm_indices = torch.randperm(seq_len)[:K]
-                # Extract tokens at those positions and shuffle them
-                shuffled_tokens = input_ids[i, perm_indices][torch.randperm(K)]
-                # Put shuffled tokens back
-                input_ids[i, perm_indices] = shuffled_tokens
-        x = input_ids[:, :-1]
-        y = input_ids[:, 1:]
-        y.masked_fill_(y == tokenizer.pad_token_id, -1)
-        return x, y
+    if args.pad_sequence:
+        def collate_fn(examples, K=0):
+            padded_length = 512
+            # Stack all input_ids with padding to the fixed length
+            input_ids = torch.stack([
+                torch.tensor(ex['input_ids'][:padded_length] +
+                            [tokenizer.pad_token_id] * max(0, padded_length - len(ex['input_ids'])))
+                for ex in examples
+            ])
+            x = input_ids[:, :-1]
+            y = input_ids[:, 1:]
+            # Replace padding tokens with -1 in targets for ignore_index
+            y = torch.where(y == tokenizer.pad_token_id, -1, y)
+            return x, y
+    else:
+        def collate_fn(examples, K=0):
+            input_ids = torch.tensor([ex['input_ids'] for ex in examples], dtype=torch.long)
+            if K > 0:
+                batch_size, seq_len = input_ids.size()
+                for i in range(batch_size):
+                    # Select K random positions
+                    perm_indices = torch.randperm(seq_len)[:K]
+                    # Extract tokens at those positions and shuffle them
+                    shuffled_tokens = input_ids[i, perm_indices][torch.randperm(K)]
+                    # Put shuffled tokens back
+                    input_ids[i, perm_indices] = shuffled_tokens
+            x = input_ids[:, :-1]
+            y = input_ids[:, 1:]
+            y.masked_fill_(y == tokenizer.pad_token_id, -1)
+            return x, y
 
     train_loader = torch.utils.data.DataLoader(
         train_dataset,
@@ -291,7 +306,7 @@ if __name__ == '__main__':
 
     experiment = comet_ml.Experiment(
         api_key=os.environ['COMET_API_KEY'],
-        project_name='plato-pt',
+        project_name=args.project_name,
         workspace='fernand',
         auto_metric_logging=False,
         log_env_gpu=False,

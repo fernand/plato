@@ -167,10 +167,10 @@ class GPT(nn.Module):
             logits = None
         return logits, loss
 
-    def configure_optimizers(self, adam_wd, adam_lr, adam_betas):
+    def configure_optimizers(self, wd, adam_lr, adam_betas):
         return [
             Muon(self.transformer.parameters(), lr=10*adam_lr, weight_decay=0, momentum=0.95),
-            torch.optim.AdamW(self.lm_head.parameters(), lr=adam_lr, weight_decay=adam_wd, betas=adam_betas)
+            torch.optim.AdamW(self.lm_head.parameters(), lr=adam_lr, weight_decay=wd, betas=adam_betas)
         ]
 
 def log_gradient_stats(model):
@@ -275,7 +275,7 @@ if __name__ == '__main__':
     print('Model # params', sum(p.numel() for p in model.parameters()))
 
     # See https://arxiv.org/abs/2507.07101 for beta2 scaling.
-    optimizers = model.configure_optimizers(adam_wd=args.weight_decay,
+    optimizers = model.configure_optimizers(wd=args.weight_decay,
                                                adam_lr=args.learning_rate,
                                                adam_betas=(0.9, (0.95)**(1.0/step_scale)))
 
@@ -300,14 +300,14 @@ if __name__ == '__main__':
         log_env_details=False,
         # disabled=True,
     )
-    experiment.log_parameters(
+    experiment.log_parameters({
         'dataset_path': args.dataset_path,
         'num_epochs': args.num_epochs,
         'batch_size': args.batch_size,
         'learning_rate': args.learning_rate,
         'weight_decay': args.weight_decay,
         'num_token_permutations': args.num_token_permutations,
-    )
+    })
 
     lossf = 0.0
     x, y, train_iter = get_batch(train_iter, train_loader)

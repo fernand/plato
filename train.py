@@ -1,3 +1,4 @@
+import functools
 import math
 import os
 from dataclasses import dataclass
@@ -192,6 +193,7 @@ if __name__ == '__main__':
     parser.add_argument('--batch_size', type=int, default=4, help='batch size, in units of #batch dimensions')
     parser.add_argument('--learning_rate', type=float, default=1e-4, help='max LR value')
     parser.add_argument('--weight_decay', type=float, default=0.0, help='weight decay')
+    parser.add_argument('--num_token_permutations', type=int, default=0, help='Number of random token permutations')
     args = parser.parse_args()
 
     assert torch.cuda.is_available(), 'CUDA not available'
@@ -223,8 +225,17 @@ if __name__ == '__main__':
 
     sequence_length = 1024
 
-    def collate_fn(examples):
+    def collate_fn(examples, K=0):
         input_ids = torch.tensor([ex['input_ids'] for ex in examples], dtype=torch.long)
+        if K > 0:
+            batch_size, seq_len = input_ids.size()
+            for i in range(batch_size):
+                # Select K random positions
+                perm_indices = torch.randperm(seq_len)[:K]
+                # Extract tokens at those positions and shuffle them
+                shuffled_tokens = input_ids[i, perm_indices][torch.randperm(K)]
+                # Put shuffled tokens back
+                input_ids[i, perm_indices] = shuffled_tokens
         x = input_ids[:, :-1]
         y = input_ids[:, 1:]
         y.masked_fill_(y == tokenizer.pad_token_id, -1)
@@ -234,8 +245,8 @@ if __name__ == '__main__':
         train_dataset,
         batch_size=args.batch_size,
         shuffle=True,
-        collate_fn=collate_fn,
-        num_workers=4,
+        collate_fn=functools.partial(collate_fn, K=args.num_token_permutations),
+        num_workers=1,
         pin_memory=True
     )
     val_loader = torch.utils.data.DataLoader(

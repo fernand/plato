@@ -292,7 +292,7 @@ if __name__ == '__main__':
 
     experiment = comet_ml.Experiment(
         api_key=os.environ['COMET_API_KEY'],
-        project_name='ts-pt',
+        project_name='plato-pt',
         workspace='fernand',
         auto_metric_logging=False,
         log_env_gpu=False,

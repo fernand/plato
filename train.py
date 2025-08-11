@@ -206,7 +206,6 @@ if __name__ == '__main__':
         unk_token="<unk>",
         mask_token="<mask>"
     )
-    tokenizer.padding_side = 'right'
     vocab_size = len(tokenizer)
 
     ds = datasets.load_from_disk(args.dataset_path)
@@ -217,7 +216,7 @@ if __name__ == '__main__':
     target_batch_size = 512
     batch_ratio = target_batch_size // args.batch_size
     step_scale = batch_ratio
-    val_loss_every = batch_ratio * 128
+    val_loss_every = 8
     warmup_iters = int(0.028 * num_iters)
     warmdown_iters = int(0.24 * num_iters)
     val_max_steps = 20
@@ -300,6 +299,14 @@ if __name__ == '__main__':
         log_env_host=False,
         log_env_details=False,
         # disabled=True,
+    )
+    experiment.log_parameters(
+        'dataset_path': args.dataset_path,
+        'num_epochs': args.num_epochs,
+        'batch_size': args.batch_size,
+        'learning_rate': args.learning_rate,
+        'weight_decay': args.weight_decay,
+        'num_token_permutations': args.num_token_permutations,
     )
 
     lossf = 0.0

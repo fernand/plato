@@ -14,6 +14,7 @@ tokenizer = PreTrainedTokenizerFast(
     unk_token='<unk>',
     mask_token='<mask>'
 )
+tokenizer.padding_side = 'right'
 
 def tokenize_text(text):
     return tokenizer(text, add_special_tokens=False, return_attention_mask=False)['input_ids']

@@ -196,6 +196,7 @@ if __name__ == '__main__':
     parser.add_argument('--weight_decay', type=float, default=0.0, help='weight decay')
     parser.add_argument('--num_token_permutations', type=int, default=0, help='Number of random token permutations')
     parser.add_argument('--project_name', type=str, required=True, help='Comet project name')
+    parser.add_argument('--val_los_every', type=int, default=8, help='How often to eval')
     args = parser.parse_args()
 
     assert torch.cuda.is_available(), 'CUDA not available'
@@ -218,7 +219,6 @@ if __name__ == '__main__':
     target_batch_size = 512
     batch_ratio = target_batch_size // args.batch_size
     step_scale = batch_ratio
-    val_loss_every = 8
     warmup_iters = int(0.028 * num_iters)
     warmdown_iters = int(0.24 * num_iters)
     val_max_steps = 20
@@ -331,8 +331,8 @@ if __name__ == '__main__':
             t0 = time.perf_counter()
         last_step = (step == num_iters)
 
-        if (val_loss_every > 0 \
-            and (step % val_loss_every == 0 or last_step)) \
+        if (args.val_loss_every > 0 \
+            and (step % args.val_loss_every == 0 or last_step)) \
             and (val_loader is not None):
             model.eval()
             val_iter = iter(val_loader)  # Reset validation iterator

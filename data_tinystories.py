@@ -2,7 +2,9 @@ import datasets
 import transformers
 
 if __name__ == '__main__':
-    dataset = datasets.load_dataset('roneneldan/TinyStories')
+    dataset_path = 'roneneldan/TinyStories'
+    dataset = datasets.load_dataset(dataset_path)
+
     # tokenizer = transformers.GPTNeoXTokenizerFast.from_pretrained('EleutherAI/gpt-neox-20b')
     tokenizer = transformers.PreTrainedTokenizerFast(
             tokenizer_file="plato_tokenizer.json",
@@ -11,6 +13,13 @@ if __name__ == '__main__':
             pad_token="<pad>",
             unk_token="<unk>",
             mask_token="<mask>"
+        )
+
+    def tokenize(batch):
+        return tokenizer(
+            [text + tokenizer.eos_token for text in batch['text']],
+            truncation=False,
+            padding=False
         )
 
     def tokenize_with_eos(batch):

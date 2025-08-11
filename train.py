@@ -116,7 +116,7 @@ class MLP(nn.Module):
 
     def forward(self, x):
         x = self.wup(x)
-        x = F.gelu(x)
+        x = F.relu(x).square()
         x = self.wdown(x)
         return x
 

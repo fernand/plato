@@ -1,8 +1,16 @@
-from datasets import load_dataset
-from transformers import GPTNeoXTokenizerFast
+import datasets
+import transformers
 
-dataset = load_dataset('roneneldan/TinyStories')
-tokenizer = GPTNeoXTokenizerFast.from_pretrained('EleutherAI/gpt-neox-20b')
+dataset = datasets.load_dataset('roneneldan/TinyStories')
+# tokenizer = transformers.GPTNeoXTokenizerFast.from_pretrained('EleutherAI/gpt-neox-20b')
+tokenizer = transformers.PreTrainedTokenizerFast(
+        tokenizer_file="plato_tokenizer.json",
+        bos_token="<s>",
+        eos_token="</s>",
+        pad_token="<pad>",
+        unk_token="<unk>",
+        mask_token="<mask>"
+    )
 
 def tokenize_with_eos(batch):
     return tokenizer(
@@ -18,4 +26,4 @@ tokenized_dataset = dataset.map(
     num_proc=32,
 )
 
-tokenized_dataset.save_to_disk('tokenized_tinystories_neox')
+tokenized_dataset.save_to_disk('tokenized_tinystories_plato')

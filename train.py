@@ -188,7 +188,6 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--dataset_path', type=str, required=True, help='path to tokenized HF dataset')
-    parser.add_argument('--output_dir', type=str, default='', help='output directory to which to write logs and checkpoints')
     parser.add_argument('--batch_size', type=int, default=4, help='batch size, in units of #batch dimensions')
     parser.add_argument('--learning_rate', type=float, default=1e-4, help='max LR value')
     parser.add_argument('--weight_decay', type=float, default=0.0, help='weight decay')
@@ -196,8 +195,14 @@ if __name__ == '__main__':
 
     assert torch.cuda.is_available(), 'CUDA not available'
 
-    tokenizer = transformers.GPTNeoXTokenizerFast.from_pretrained('EleutherAI/gpt-neox-20b')
-    tokenizer.pad_token = tokenizer.eos_token
+    tokenizer = transformers.PreTrainedTokenizerFast(
+        tokenizer_file="plato_tokenizer.json",
+        bos_token="<s>",
+        eos_token="</s>",
+        pad_token="<pad>",
+        unk_token="<unk>",
+        mask_token="<mask>"
+    )
     tokenizer.padding_side = 'right'
     # Round to 16.
     vocab_size = ((len(tokenizer) + 15) // 16) * 16

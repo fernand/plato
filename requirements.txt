@@ -1,4 +1,5 @@
 comet-ml
 torch
+tokenizers
 transformers
 datasets

@@ -76,4 +76,4 @@ def build_dataset(filepaths, chunk_size, num_workers=32):
 if __name__ == '__main__':
     files = sorted(Path('./plato_works').glob('*.txt'))
     ds = build_dataset(files, chunk_size=1024 + 1, num_workers=32)
-    ds.save_to_disk('./tokenized_plato_plato')
+    ds.save_to_disk('./tokenized_plato_works')

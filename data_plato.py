@@ -1,8 +1,9 @@
 import math
+import random
 from pathlib import Path
 
 import numpy as np
-from datasets import Dataset, Features, Sequence, Value
+from datasets import Dataset, DatasetDict, Features, Sequence, Value
 from transformers import PreTrainedTokenizerFast
 
 tokenizer = PreTrainedTokenizerFast(
@@ -15,7 +16,6 @@ tokenizer = PreTrainedTokenizerFast(
 )
 
 def tokenize_text(text):
-    # Keep counts exact; we pad only the final chunk per file.
     return tokenizer(text, add_special_tokens=False, return_attention_mask=False)['input_ids']
 
 def chunk_per_file(token_ids, chunk_size, pad_id):
@@ -63,17 +63,25 @@ def build_dataset(filepaths, chunk_size, num_workers=32):
         'attention_mask': Sequence(Value('int64')),
         'labels': Sequence(Value('int64')),
     })
-    files_ds = Dataset.from_dict({'file': list(map(str, filepaths))}, features=Features({'file': Value('string')}))
+    files_ds = Dataset.from_dict({'file': list(map(str, filepaths))},
+                                 features=Features({'file': Value('string')}))
     ds = files_ds.map(
         lambda batch: _process_batch(batch, chunk_size),
         batched=True,
-        num_proc=num_workers,  # 32-way parallel
+        num_proc=num_workers,
         desc=f'Tokenize+chunk (N={chunk_size})'
     )
-    # Materialize with the desired features
-    return ds.cast(features)
+    ds = ds.cast(features)
+
+    ds = ds.shuffle(seed=42)
+    val_size = min(100, len(ds))
+    val_indices = set(random.sample(range(len(ds)), val_size))
+    train_data = ds.select([i for i in range(len(ds)) if i not in val_indices])
+    val_data = ds.select([i for i in range(len(ds)) if i in val_indices])
+
+    return DatasetDict({'train': train_data, 'validation': val_data})
 
 if __name__ == '__main__':
     files = sorted(Path('./plato_works').glob('*.txt'))
-    ds = build_dataset(files, chunk_size=1024 + 1, num_workers=32)
-    ds.save_to_disk('./tokenized_plato_works')
+    ds_dict = build_dataset(files, chunk_size=1024 + 1, num_workers=32)
+    ds_dict.save_to_disk('./tokenized_plato_works')

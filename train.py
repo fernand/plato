@@ -188,6 +188,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--dataset_path', type=str, required=True, help='path to tokenized HF dataset')
+    parser.add_argument('--num_epochs', type=int, default=1, help='Num epochs')
     parser.add_argument('--batch_size', type=int, default=4, help='batch size, in units of #batch dimensions')
     parser.add_argument('--learning_rate', type=float, default=1e-4, help='max LR value')
     parser.add_argument('--weight_decay', type=float, default=0.0, help='weight decay')
@@ -208,7 +209,7 @@ if __name__ == '__main__':
 
     ds = datasets.load_from_disk(args.dataset_path)
     train_dataset = ds['train']
-    num_iters = len(train_dataset) // args.batch_size
+    num_iters = args.num_epochs * (len(train_dataset) // args.batch_size)
     val_dataset = ds.get('validation', ds.get('test', None))
 
     target_batch_size = 512
@@ -220,21 +221,13 @@ if __name__ == '__main__':
     val_max_steps = 20
     save_every = batch_ratio * 1000
 
-    sequence_length = 512
+    sequence_length = 1024
 
     def collate_fn(examples):
-        # Always pad to sequence_length + 1 (for shifted input/target pairs)
-        padded_length = sequence_length + 1
-        # Stack all input_ids with padding to the fixed length
-        input_ids = torch.stack([
-            torch.tensor(ex['input_ids'][:padded_length] +
-                        [tokenizer.pad_token_id] * max(0, padded_length - len(ex['input_ids'])))
-            for ex in examples
-        ])
+        input_ids = torch.tensor([ex['input_ids'] for ex in examples], dtype=torch.long)
         x = input_ids[:, :-1]
         y = input_ids[:, 1:]
-        # Replace padding tokens with -1 in targets for ignore_index
-        y = torch.where(y == tokenizer.pad_token_id, -1, y)
+        y.masked_fill_(y == tokenizer.pad_token_id, -1)
         return x, y
 
     train_loader = torch.utils.data.DataLoader(

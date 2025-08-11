@@ -52,14 +52,20 @@ def generate_text(
     return generated_text
 
 if __name__ == '__main__':
-    tokenizer = transformers.GPTNeoXTokenizerFast.from_pretrained('EleutherAI/gpt-neox-20b')
-    # Round to 16.
-    vocab_size = ((len(tokenizer) + 15) // 16) * 16
+    tokenizer = transformers.PreTrainedTokenizerFast(
+        tokenizer_file="plato_tokenizer.json",
+        bos_token="<s>",
+        eos_token="</s>",
+        pad_token="<pad>",
+        unk_token="<unk>",
+        mask_token="<mask>"
+    )
+    vocab_size = len(tokenizer)
 
     torch.set_float32_matmul_precision('high')
 
     model_dict = torch.load(
-        'logs/0d6d1f46473d4d47941d20e85ca33f89/final.pt',
+        'logs/5c2acc6cb90841488d483ea340d26fbb/final.pt',
         weights_only=True,
         map_location=torch.device('cuda'))['model']
     model = GPT(GPTConfig(vocab_size=vocab_size)).eval().cuda()

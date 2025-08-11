@@ -1,10 +1,9 @@
 python train.py \
-    --dataset_path tokenized_tinystories \
-    --num_epochs 1 \
-    --pad_sequence \
-    --batch_size 64 \
-    --val_loss_every 512 \
-    --learning_rate 0.0003 \
+    --dataset_path tokenized_plato_works \
+    --num_epochs 16 \
+    --batch_size 32 \
+    --val_loss_every 8 \
+    --learning_rate 0.00005 \
     --weight_decay 0.1 \
-    --num_token_permutations 0 \
-    --project_name ts-pt \
+    --num_token_permutations 16 \
+    --project_name plato-pt \

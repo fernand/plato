@@ -286,6 +286,11 @@ if __name__ == '__main__':
     model = model.train().cuda()
     torch.set_float32_matmul_precision('high')
     model = torch.compile(model, dynamic=False)
+    model_dict = torch.load(
+        'logs/01546c8d7d9d478189eac717f4e3516d/model_step007999.pt',
+        weights_only=True,
+        map_location=torch.device('cuda'))
+    model.load_state_dict(model_dict)
     ctx = torch.autocast(device_type='cuda', dtype=torch.bfloat16)
     print('Model # params', sum(p.numel() for p in model.parameters()))
 

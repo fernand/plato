@@ -1,9 +1,10 @@
 python train.py \
     --dataset_path tokenized_plato_works \
-    --num_epochs 16 \
+    --num_epochs 32 \
     --batch_size 32 \
     --val_loss_every 8 \
     --learning_rate 0.00005 \
     --weight_decay 0.1 \
-    --num_token_permutations 16 \
+    --num_token_permutations 32 \
     --project_name plato-pt \
+    --save_every 8 \

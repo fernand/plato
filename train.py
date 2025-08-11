@@ -197,6 +197,7 @@ if __name__ == '__main__':
     parser.add_argument('--num_token_permutations', type=int, default=0, help='Number of random token permutations')
     parser.add_argument('--project_name', type=str, required=True, help='Comet project name')
     parser.add_argument('--val_loss_every', type=int, default=8, help='How often to eval')
+    parser.add_argument('--save_every', type=int)
     args = parser.parse_args()
 
     assert torch.cuda.is_available(), 'CUDA not available'
@@ -222,7 +223,8 @@ if __name__ == '__main__':
     warmup_iters = int(0.028 * num_iters)
     warmdown_iters = int(0.24 * num_iters)
     val_max_steps = 20
-    save_every = batch_ratio * 1000
+    if args.save_every is None:
+        args.save_every = batch_ratio * 1000
 
     if args.pad_sequence:
         def collate_fn(examples, K=0):
@@ -379,7 +381,7 @@ if __name__ == '__main__':
             experiment.log_metric('train_loss', lossf, step)
             lossf = 0.0
 
-        if (step + 1) % save_every == 0:
+        if (step + 1) % args.save_every == 0:
             os.makedirs('logs/%s' % experiment.id, exist_ok=True)
             torch.save(model.state_dict(), 'logs/%s/model_step%06d.pt' % (experiment.id, step))
 

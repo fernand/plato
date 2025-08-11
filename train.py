@@ -204,6 +204,7 @@ if __name__ == '__main__':
         mask_token="<mask>"
     )
     tokenizer.padding_side = 'right'
+    vocab_size = len(tokenizer)
 
     ds = datasets.load_from_disk(args.dataset_path)
     train_dataset = ds['train']

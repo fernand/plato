@@ -1,11 +1,7 @@
 data/fineweb*/
 tokenized*
-*log*/
 *.pyc
 *.npy
-*.txt
 *.pt
-*.png
-*.csv
 *.pkl
 .venv

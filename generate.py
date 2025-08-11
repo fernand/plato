@@ -65,9 +65,9 @@ if __name__ == '__main__':
     torch.set_float32_matmul_precision('high')
 
     model_dict = torch.load(
-        'logs/5c2acc6cb90841488d483ea340d26fbb/final.pt',
+        'logs/01546c8d7d9d478189eac717f4e3516d/model_step007999.pt',
         weights_only=True,
-        map_location=torch.device('cuda'))['model']
+        map_location=torch.device('cuda'))
     model = GPT(GPTConfig(vocab_size=vocab_size)).eval().cuda()
     state_dict = {}
     # The compiled torch state dict prepends parameter names with '_orig_mod.'
@@ -75,7 +75,8 @@ if __name__ == '__main__':
         state_dict[k.removeprefix('_orig_mod.')] = v
     model.load_state_dict(state_dict)
 
-    prompt = 'SOCRATES: What are you doing here, Critias?'
+    # prompt = 'SOCRATES: What are you doing here, Critias?'
+    prompt = 'Diane stepped in the forest.'
 
     sampled_output = generate_text(
         model,

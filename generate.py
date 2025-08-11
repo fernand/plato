@@ -75,8 +75,7 @@ if __name__ == '__main__':
         state_dict[k.removeprefix('_orig_mod.')] = v
     model.load_state_dict(state_dict)
 
-    # prompt = 'Diane stepped into the forest.'
-    prompt = 'What is in the forest?'
+    prompt = 'SOCRATES: What are you doing here, Critias?'
 
     sampled_output = generate_text(
         model,
